@@ -1,0 +1,360 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Proces Deploymentu ChatHeroes
+
+## ⚠️ Ważne Informacje
+
+**Ograniczenia i Wnioski**:
+- Command chaining (`cd client && npm run build`) NIE DZIAŁA na Windows
+- Każdą komendę należy wykonywać osobno w odpowiednim folderze
+- Zawsze sprawdź czy masz zainstalowane wymagane narzędzia (Docker, Vercel CLI, Railway CLI) przed rozpoczęciem
+- Monitoruj logi podczas deploymentu - zawierają cenne informacje diagnostyczne
+- Zwróć uwagę na ostrzeżenia npm podczas instalacji zależności
+
+## 🌐 Środowiska Deploymentu
+
+### Production
+- **Frontend (Vercel)**
+  - URL: `client-phi-eight-74.vercel.app`
+  - Zmienne środowiskowe:
+    ```
+    VITE_API_URL=https://backendchatheroes2-production.up.railway.app/api
+    VITE_WS_URL=wss://backendchatheroes2-production.up.railway.app
+    ```
+  - Deployment: `vercel --prod`
+
+- **Backend (Railway)**
+  - URL: `backendchatheroes2-production.up.railway.app`
+  - Projekt: "production"
+  - Zmienne środowiskowe:
+    ```
+    NODE_ENV=production
+    FRONTEND_URL=https://client-phi-eight-74.vercel.app
+    ```
+  - Deployment: `railway up`
+
+### Staging
+- **Frontend (Vercel)**
+  - URL: `client-[hash]-kosmicznynomads-projects.vercel.app`
+  - Zmienne środowiskowe:
+    ```
+    VITE_API_URL=https://[STAGING_BACKEND_URL]/api
+    VITE_WS_URL=wss://[STAGING_BACKEND_URL]
+    ```
+  - Deployment: `vercel`
+
+- **Backend (Railway)**
+  - Projekt: "staging"
+  - Serwis: "staging-backend"
+  - Zmienne środowiskowe:
+    ```
+    NODE_ENV=staging
+    FRONTEND_URL=https://client-[hash]-kosmicznynomads-projects.vercel.app
+    ```
+  - Deployment: `railway up`
+
+## 🔍 Checklist Przed Deploymentem
+
+1. **Wymagane Narzędzia**:
+   - [ ] Vercel CLI (`npm i -g vercel`)
+   - [ ] Railway CLI (`npm i -g @railway/cli`)
+   - [ ] Docker (opcjonalnie, dla testów lokalnych)
+   - [ ] Node.js i npm
+
+2. **Konfiguracja**:
+   - [ ] Sprawdź zmienne środowiskowe w `.env.production`
+   - [ ] Upewnij się, że `config.js` poprawnie obsługuje URL-e produkcyjne
+   - [ ] Zweryfikuj CORS settings w backendzie
+
+## 🛠️ Komendy Deploymentu
+
+### Frontend (Vercel)
+```bash
+# NIE UŻYWAJ: cd client && vercel deploy
+
+# ZAMIAST TEGO:
+cd client
+vercel deploy
+# lub
+vercel --prod  # bezpośrednio na produkcję
+
+# Dla preview:
+vercel
+```
+
+### Backend (Railway)
+```bash
+# NIE UŻYWAJ: cd server && railway up
+
+# ZAMIAST TEGO:
+cd server
+railway up
+# lub
+railway deploy
+```
+
+### Lokalne Uruchomienie
+```bash
+# NIE UŻYWAJ: cd client && npm run dev
+
+# ZAMIAST TEGO:
+# Terminal 1:
+cd client
+npm run dev
+
+# Terminal 2:
+cd server
+npm run dev
+```
+
+## 🌐 Aktualne Adresy
+
+**Frontend (Vercel)**:
+- Główny: `client-phi-eight-74.vercel.app`
+- Development: `client-mcx5k1mzf-kosmicznynomads-projects.vercel.app`
+
+**Backend (Railway)**:
+- Publiczny: `backendchatheroes2-production.up.railway.app`
+- Wewnętrzny: `backendchatheroes2.railway.internal`
+
+## 🏗️ Struktura Projektu
+
+```
+/
+├── client/                 # Frontend (Vercel)
+│   ├── .env.development    # Lokalny development
+│   ├── .env.production     # Produkcja
+│   ├── vite.config.js      # Konfiguracja proxy
+│   ├── vercel.json        # Konfiguracja Vercel
+│   ├── package.json       # Zależności i skrypty
+│   └── src/
+│       └── config.js      # Konfiguracja API
+└── server/                # Backend (Railway)
+    ├── .env              # Zmienne środowiskowe
+    ├── app.js           # Główna aplikacja
+    ├── package.json     # Zależności i skrypty
+    ├── docker-compose.yml # Konfiguracja lokalna
+    └── Dockerfile       # Konteneryzacja
+```
+
+## 🚀 Proces Deploymentu
+
+### Deployment na Staging
+1. **Backend (Railway)**
+   ```bash
+   cd server
+   railway link  # wybierz projekt "staging"
+   railway up
+   ```
+   - Skopiuj URL backendu po deploymencie
+
+2. **Frontend (Vercel)**
+   ```bash
+   cd client
+   vercel
+   ```
+   - Skopiuj URL frontendu po deploymencie
+
+3. **Aktualizacja zmiennych**
+   - W Railway Dashboard:
+     - Projekt "staging"
+     - Ustaw `FRONTEND_URL` na URL frontendu
+   - W Vercel Dashboard:
+     - Environment Variables
+     - Ustaw `VITE_API_URL` i `VITE_WS_URL` dla Preview/Development
+
+### Deployment na Production
+1. **Backend (Railway)**
+   ```bash
+   cd server
+   railway link  # wybierz projekt "production"
+   railway up
+   ```
+
+2. **Frontend (Vercel)**
+   ```bash
+   cd client
+   vercel --prod
+   ```
+
+3. **Aktualizacja zmiennych**
+   - W Railway Dashboard:
+     - Projekt "production"
+     - Ustaw `FRONTEND_URL` na URL produkcyjny
+   - W Vercel Dashboard:
+     - Sprawdź zmienne produkcyjne
+
+## 🔍 Weryfikacja Deploymentu
+
+### Staging
+1. Sprawdź health endpoint:
+   ```bash
+   curl https://[STAGING_BACKEND_URL]/health
+   ```
+2. Otwórz frontend w przeglądarce
+3. Przetestuj funkcjonalności
+4. Sprawdź logi w Railway i Vercel Dashboard
+
+### Production
+1. Sprawdź health endpoint:
+   ```bash
+   curl https://backendchatheroes2-production.up.railway.app/health
+   ```
+2. Otwórz frontend w przeglądarce
+3. Zweryfikuj krytyczne funkcjonalności
+4. Monitoruj logi produkcyjne
+
+## 🔄 Proces Developmentu
+
+1. **Lokalne uruchomienie**:
+   ```bash
+   # Terminal 1 (client)
+   cd client
+   npm run dev    # http://localhost:3000
+
+   # Terminal 2 (server)
+   cd server
+   npm run dev    # http://localhost:3001
+   ```
+
+2. **Testowanie endpointów**:
+   ```bash
+   # Test backendu
+   curl http://localhost:3001/health
+   curl http://localhost:3001/api/test
+   curl http://localhost:3001/api/user/profile  # Test autoryzacji
+
+   # Test produkcji
+   curl https://backendchatheroes2-production.up.railway.app/health
+   curl https://backendchatheroes2-production.up.railway.app/api/test
+
+   # Test WordPress
+   curl https://backendchatheroes2-production.up.railway.app/api/auth/check-subscription
+
+   # Test WebSocket
+   wscat -c wss://backendchatheroes2-production.up.railway.app
+   ```
+
+## 🔒 CORS i Bezpieczeństwo
+
+1. **Dozwolone domeny**:
+   - `client-phi-eight-74.vercel.app`
+   - `client-mcx5k1mzf-kosmicznynomads-projects.vercel.app`
+   - `*.vercel.app`
+   - `localhost`
+   - `127.0.0.1`
+
+2. **Headers**:
+   - `Content-Type`
+   - `Authorization`
+   - `X-Requested-With`
+   - `Accept`
+   - `Origin`
+
+## 🔍 Monitoring
+
+1. **Vercel Dashboard**:
+   - Status deploymentu
+   - Logi
+   - Metryki
+
+2. **Railway Dashboard**:
+   - Logi kontenerów
+   - Użycie zasobów
+   - Status deploymentu
+
+3. **MongoDB Atlas**:
+   - Monitoring bazy
+   - Metryki wydajności
+   - Alerty
+
+## ⚠️ Rozwiązywanie Problemów
+
+1. **CORS Błędy**:
+   - Sprawdź origin w `app.js`
+   - Zweryfikuj headers
+   - Sprawdź proxy w `vite.config.js`
+
+2. **Autoryzacja**:
+   - Sprawdź JWT token
+   - Zweryfikuj WordPress integrację
+   - Sprawdź wygasanie tokenów
+
+3. **Deployment Błędy**:
+   - Sprawdź zmienne środowiskowe
+   - Zweryfikuj logi
+   - Sprawdź build procesy
+
+## 📝 Checklist Deploymentu
+
+1. **Przed Deploymentem**:
+   - [ ] Test buildu lokalnie
+   - [ ] Sprawdź zmienne środowiskowe
+   - [ ] Test endpointów lokalnie
+
+2. **Po Deploymencie**:
+   - [ ] Sprawdź status na Vercel/Railway
+   - [ ] Test endpointów produkcyjnych
+   - [ ] Sprawdź logi
+   - [ ] Test integracji frontend-backend
+
+## 🔄 Rollback
+
+1. **Vercel**:
+   - Użyj dashboardu do rollbacku do poprzedniej wersji
+   - Lub: `git revert` i push
+
+2. **Railway**:
+   - Użyj dashboardu do rollbacku
+   - Lub: przywróć poprzedni tag Dockera 
+
+## 🚨 Znane Problemy i Rozwiązania
+
+1. **URL Handling**:
+   ```javascript
+   // Przykład poprawnej obsługi URL w config.js
+   const ensureValidUrl = (url) => {
+     if (!url) return defaultUrl;
+     url = url.trim();
+     if (!url.startsWith('http')) url = 'https://' + url;
+     return url;
+   };
+   ```
+
+2. **Windows-Specific**:
+   ```powershell
+   # ❌ NIE RÓB TEGO na Windows:
+   cd client && npm run build
+
+   # ✅ ZAMIAST TEGO:
+   cd client
+   npm run build
+   ```
+
+3. **Deployment Verification**:
+   ```bash
+   # Sprawdź health endpoint
+   curl https://backendchatheroes2-production.up.railway.app/health
+   
+   # Sprawdź logi
+   railway logs
+   ```
+
+## 📊 Monitoring Deploymentu
+
+1. **Co Monitorować**:
+   - Status health endpointu
+   - Logi aplikacji
+   - Ostrzeżenia npm/build
+   - CORS błędy w konsoli przeglądarki
+   - Połączenie WebSocket
+   - Odpowiedzi API
+
+2. **Gdzie Szukać Problemów**:
+   - Railway Dashboard -> Logi
+   - Vercel Dashboard -> Deployments
+   - Browser DevTools -> Network, Console
+   - MongoDB Atlas -> Monitoring 
